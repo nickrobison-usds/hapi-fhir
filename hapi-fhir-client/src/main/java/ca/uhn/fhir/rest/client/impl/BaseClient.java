@@ -478,7 +478,7 @@ public abstract class BaseClient implements IRestfulClient {
 			 * a Parameters resource.
 			 */
 			EncodingEnum respType = EncodingEnum.forContentType(theResponseMimeType);
-			if (respType != null || theResponseStatusCode < 200 || theResponseStatusCode >= 300) {
+			if (respType != null || theResponseStatusCode < 200 || theResponseStatusCode >= 300 || theResponseStatusCode == 204) {
 				return super.invokeClient(theResponseMimeType, theResponseInputStream, theResponseStatusCode, theHeaders);
 			}
 
@@ -546,7 +546,16 @@ public abstract class BaseClient implements IRestfulClient {
 				if (myAllowHtmlResponse && theResponseMimeType.toLowerCase().contains(Constants.CT_HTML) && myReturnType != null) {
 					return readHtmlResponse(theResponseInputStream);
 				}
-				throw NonFhirResponseException.newInstance(theResponseStatusCode, theResponseMimeType, theResponseInputStream);
+				// If the response is a 204 (no content) then the input stream is going to be null, but we still want to throw the exception.
+				final NonFhirResponseException nonFhirResponseException;
+				if (theResponseInputStream == null) {
+					nonFhirResponseException = NonFhirResponseException.newInstance(theResponseStatusCode, theResponseMimeType, "");
+				} else {
+					nonFhirResponseException = NonFhirResponseException.newInstance(theResponseStatusCode, theResponseMimeType, theResponseInputStream);
+				}
+
+				theHeaders.forEach((key, values) -> nonFhirResponseException.addResponseHeader(key, String.join(",", values)));
+				throw nonFhirResponseException;
 			}
 			IParser parser = respType.newParser(getFhirContext());
 			parser.setServerBaseUrl(getUrlBase());

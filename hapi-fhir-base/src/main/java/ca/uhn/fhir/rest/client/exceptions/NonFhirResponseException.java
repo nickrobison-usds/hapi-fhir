@@ -65,6 +65,10 @@ public class NonFhirResponseException extends BaseServerResponseException {
 			}
 		}
 
+		return newInstance(theStatusCode, theContentType, responseBody);
+	}
+
+	public static NonFhirResponseException newInstance(int theStatusCode, String theContentType, String responseBody) {
 		NonFhirResponseException retVal;
 		if (isBlank(theContentType)) {
 			retVal = new NonFhirResponseException(theStatusCode, "Response contains no Content-Type");
