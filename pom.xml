@@ -2248,7 +2248,6 @@
 				<module>hapi-fhir-client</module>
 				<module>hapi-fhir-server</module>
 				<module>hapi-fhir-validation</module>
-				<!--<module>hapi-fhir-narrativegenerator</module>-->
 				<module>hapi-fhir-structures-dstu2</module>
 				<module>hapi-fhir-structures-hl7org-dstu2</module>
 				<module>hapi-fhir-validation-resources-dstu2</module>
@@ -2258,37 +2257,11 @@
 				<module>hapi-fhir-validation-resources-dstu3</module>
 				<module>hapi-fhir-structures-r4</module>
 				<module>hapi-fhir-validation-resources-r4</module>
-				<module>hapi-fhir-igpacks</module>
-				<module>hapi-fhir-jpaserver-model</module>
-				<module>hapi-fhir-jpaserver-searchparam</module>
-				<module>hapi-fhir-jpaserver-subscription</module>
-				<module>hapi-fhir-jaxrsserver-base</module>
-				<module>hapi-fhir-jaxrsserver-example</module>
-				<module>hapi-fhir-jpaserver-base</module>
-				<module>hapi-fhir-jpaserver-elasticsearch</module>
-				<module>hapi-fhir-jpaserver-example</module>
-				<module>hapi-fhir-jpaserver-migrate</module>
-				<module>restful-server-example</module>
-				<module>restful-server-example-test</module>
-				<module>hapi-fhir-testpage-overlay</module>
-				<module>hapi-fhir-jpaserver-uhnfhirtest</module>
 				<module>hapi-fhir-client-okhttp</module>
 				<module>hapi-fhir-android</module>
 				<module>hapi-fhir-converter</module>
 				<module>hapi-fhir-cli</module>
 				<module>hapi-fhir-dist</module>
-				<module>examples</module>
-				<module>osgi/hapi-fhir-karaf-features</module>
-				<module>osgi/hapi-fhir-karaf-integration-tests</module>
-				<module>example-projects/hapi-fhir-base-example-embedded-ws</module>
-				<module>example-projects/hapi-fhir-standalone-overlay-example</module>
-				<module>example-projects/hapi-fhir-jpaserver-cds-example</module>
-				<module>example-projects/hapi-fhir-jpaserver-dynamic</module>
-				<module>example-projects/hapi-fhir-jpaserver-example-postgres</module>
-				<module>tests/hapi-fhir-base-test-mindeps-client</module>
-				<module>tests/hapi-fhir-base-test-mindeps-server</module>
-				<module>hapi-fhir-spring-boot</module>
-				<!--<module>hapi-fhir-osgi-core</module>-->
 			</modules>
 		</profile>
 		<profile>
