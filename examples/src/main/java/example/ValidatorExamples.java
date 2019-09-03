@@ -181,7 +181,13 @@ public class ValidatorExamples {
       
       // Validate
       ValidationResult result = validator.validateWithResult(obs);
-      
+
+      /*
+       * Note: You can also explicitly declare a profile to validate against
+       * using the block below.
+       */
+		// ValidationResult result = validator.validateWithResult(obs, new ValidationOptions().addProfile("http://myprofile.com"));
+
       // Do we have any errors or fatal errors?
       System.out.println(result.isSuccessful()); // false
       
@@ -235,6 +241,12 @@ public class ValidatorExamples {
 			}
 
 			@Override
+			public ValueSet fetchValueSet(FhirContext theContext, String theSystem) {
+				// TODO: implement
+				return null;
+			}
+
+			@Override
 			public <T extends IBaseResource> T fetchResource(FhirContext theContext, Class<T> theClass, String theUri) {
 				// TODO: implement
 				return null;
@@ -257,7 +269,19 @@ public class ValidatorExamples {
 				// TODO: implement
 				return null;
 			}
-      };
+
+			@Override
+			public LookupCodeResult lookupCode(FhirContext theContext, String theSystem, String theCode) {
+				// TODO: implement
+				return null;
+			}
+
+			@Override
+			public StructureDefinition generateSnapshot(StructureDefinition theInput, String theUrl, String theName) {
+				// TODO: implement
+				return null;
+			}
+		};
       
       /*
        * ValidationSupportChain strings multiple instances of IValidationSupport together. The

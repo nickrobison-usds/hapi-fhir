@@ -27,20 +27,17 @@ public class GraphQLProviderR4Test extends BaseResourceProviderR4Test {
 		String query = "{name{family,given}}";
 		HttpGet httpGet = new HttpGet(ourServerBase + "/Patient/" + myPatientId0.getIdPart() + "/$graphql?query=" + UrlUtil.escapeUrlParam(query));
 
-		CloseableHttpResponse response = ourHttpClient.execute(httpGet);
-		try {
+		try (CloseableHttpResponse response = ourHttpClient.execute(httpGet)) {
 			String resp = IOUtils.toString(response.getEntity().getContent(), StandardCharsets.UTF_8);
 			ourLog.info(resp);
-			assertEquals(TestUtil.stripReturns(resp), TestUtil.stripReturns("{\n" +
+			assertEquals(TestUtil.stripReturns("{\n" +
 				"  \"name\":[{\n" +
 				"    \"family\":\"FAM\",\n" +
 				"    \"given\":[\"GIVEN1\",\"GIVEN2\"]\n" +
 				"  },{\n" +
 				"    \"given\":[\"GivenOnly1\",\"GivenOnly2\"]\n" +
 				"  }]\n" +
-				"}"));
-		} finally {
-			IOUtils.closeQuietly(response);
+				"}"), TestUtil.stripReturns(resp));
 		}
 
 	}
@@ -52,11 +49,10 @@ public class GraphQLProviderR4Test extends BaseResourceProviderR4Test {
 		String query = "{PatientList(given:\"given\"){name{family,given}}}";
 		HttpGet httpGet = new HttpGet(ourServerBase + "/$graphql?query=" + UrlUtil.escapeUrlParam(query));
 
-		CloseableHttpResponse response = ourHttpClient.execute(httpGet);
-		try {
+		try (CloseableHttpResponse response = ourHttpClient.execute(httpGet)) {
 			String resp = IOUtils.toString(response.getEntity().getContent(), StandardCharsets.UTF_8);
 			ourLog.info(resp);
-			assertEquals(TestUtil.stripReturns(resp), TestUtil.stripReturns("{\n" +
+			assertEquals(TestUtil.stripReturns("{\n" +
 				"  \"PatientList\":[{\n" +
 				"    \"name\":[{\n" +
 				"      \"family\":\"FAM\",\n" +
@@ -69,11 +65,8 @@ public class GraphQLProviderR4Test extends BaseResourceProviderR4Test {
 				"      \"given\":[\"GivenOnlyB1\",\"GivenOnlyB2\"]\n" +
 				"    }]\n" +
 				"  }]\n" +
-				"}"));
-		} finally {
-			IOUtils.closeQuietly(response);
+				"}"), TestUtil.stripReturns(resp));
 		}
-
 	}
 
 	private void initTestPatients() {

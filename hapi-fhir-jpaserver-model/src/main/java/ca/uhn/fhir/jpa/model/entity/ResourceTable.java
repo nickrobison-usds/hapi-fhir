@@ -9,9 +9,9 @@ package ca.uhn.fhir.jpa.model.entity;
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -214,6 +214,10 @@ public class ResourceTable extends BaseHasResource implements Serializable {
 	@Version
 	@Column(name = "RES_VER")
 	private long myVersion;
+	@OneToMany(mappedBy = "myResourceTable", fetch = FetchType.LAZY)
+	private Collection<ResourceHistoryProvenanceEntity> myProvenance;
+	@Transient
+	private transient ResourceHistoryTable myCurrentVersionEntity;
 
 	public Collection<ResourceLink> getResourceLinksAsTarget() {
 		if (myResourceLinksAsTarget == null) {
@@ -258,16 +262,6 @@ public class ResourceTable extends BaseHasResource implements Serializable {
 
 	public void setId(Long theId) {
 		myId = theId;
-	}
-
-	@Override
-	public IdDt getIdDt() {
-		if (getForcedId() == null) {
-			Long id = myId;
-			return new IdDt(myResourceType + '/' + id + '/' + Constants.PARAM_HISTORY + '/' + myVersion);
-		} else {
-			return new IdDt(getForcedId().getResourceType() + '/' + getForcedId().getForcedId() + '/' + Constants.PARAM_HISTORY + '/' + myVersion);
-		}
 	}
 
 	public Long getIndexStatus() {
@@ -577,6 +571,7 @@ public class ResourceTable extends BaseHasResource implements Serializable {
 		retVal.setResourceId(myId);
 		retVal.setResourceType(myResourceType);
 		retVal.setVersion(myVersion);
+		retVal.setTransientForcedId(getTransientForcedId());
 
 		retVal.setPublished(getPublished());
 		retVal.setUpdated(getUpdated());
@@ -619,4 +614,19 @@ public class ResourceTable extends BaseHasResource implements Serializable {
 		}
 	}
 
+	/**
+	 * This is a convenience to avoid loading the version a second time within a single transaction. It is
+	 * not persisted.
+	 */
+	public void setCurrentVersionEntity(ResourceHistoryTable theCurrentVersionEntity) {
+		myCurrentVersionEntity = theCurrentVersionEntity;
+	}
+
+	/**
+	 * This is a convenience to avoid loading the version a second time within a single transaction. It is
+	 * not persisted.
+	 */
+	public ResourceHistoryTable getCurrentVersionEntity() {
+		return myCurrentVersionEntity;
+	}
 }

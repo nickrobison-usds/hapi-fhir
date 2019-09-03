@@ -9,9 +9,9 @@ package ca.uhn.fhir.jpa.subscription.module.subscriber;
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,10 +20,10 @@ package ca.uhn.fhir.jpa.subscription.module.subscriber;
  * #L%
  */
 
-import ca.uhn.fhir.jpa.model.interceptor.api.IInterceptorBroadcaster;
+import ca.uhn.fhir.interceptor.api.HookParams;
+import ca.uhn.fhir.interceptor.api.IInterceptorBroadcaster;
 import ca.uhn.fhir.jpa.subscription.module.CanonicalSubscription;
-import ca.uhn.fhir.jpa.model.interceptor.api.Pointcut;
-import ca.uhn.fhir.jpa.model.interceptor.api.IInterceptorRegistry;
+import ca.uhn.fhir.interceptor.api.Pointcut;
 import ca.uhn.fhir.rest.api.EncodingEnum;
 import ca.uhn.fhir.rest.api.RequestTypeEnum;
 import ca.uhn.fhir.rest.client.api.*;
@@ -57,10 +57,8 @@ public class SubscriptionDeliveringRestHookSubscriber extends BaseSubscriptionDe
 
 	protected void deliverPayload(ResourceDeliveryMessage theMsg, CanonicalSubscription theSubscription, EncodingEnum thePayloadType, IGenericClient theClient) {
 		IBaseResource payloadResource = getAndMassagePayload(theMsg, theSubscription);
-		if (payloadResource == null) {
-			return;
-		}
 
+		// Regardless of whether we have a payload, the rest-hook should be sent.
 		doDelivery(theMsg, theSubscription, thePayloadType, theClient, payloadResource);
 	}
 
@@ -117,8 +115,13 @@ public class SubscriptionDeliveringRestHookSubscriber extends BaseSubscriptionDe
 
 		if (payloadResource == null || theSubscription.getRestHookDetails().isDeliverLatestVersion()) {
 			IIdType payloadId = theMsg.getPayloadId(myFhirContext);
+
 			try {
-				payloadResource = myResourceRetriever.getResource(payloadId.toVersionless());
+				if (payloadId != null) {
+					payloadResource = myResourceRetriever.getResource(payloadId.toVersionless());
+				} else {
+					return null;
+				}
 			} catch (ResourceGoneException e) {
 				ourLog.warn("Resource {} is deleted, not going to deliver for subscription {}", payloadId.toVersionless(), theSubscription.getIdElement(myFhirContext));
 				return null;
@@ -138,7 +141,10 @@ public class SubscriptionDeliveringRestHookSubscriber extends BaseSubscriptionDe
 		CanonicalSubscription subscription = theMessage.getSubscription();
 
 		// Interceptor call: SUBSCRIPTION_BEFORE_REST_HOOK_DELIVERY
-		if (!myInterceptorBroadcaster.callHooks(Pointcut.SUBSCRIPTION_BEFORE_REST_HOOK_DELIVERY, theMessage, subscription)) {
+		HookParams params = new HookParams()
+			.add(CanonicalSubscription.class, subscription)
+			.add(ResourceDeliveryMessage.class, theMessage);
+		if (!myInterceptorBroadcaster.callHooks(Pointcut.SUBSCRIPTION_BEFORE_REST_HOOK_DELIVERY, params)) {
 			return;
 		}
 
@@ -149,10 +155,6 @@ public class SubscriptionDeliveringRestHookSubscriber extends BaseSubscriptionDe
 		String payloadString = subscription.getPayloadString();
 		EncodingEnum payloadType = null;
 		if (payloadString != null) {
-			if (payloadString.contains(";")) {
-				payloadString = payloadString.substring(0, payloadString.indexOf(';'));
-			}
-			payloadString = payloadString.trim();
 			payloadType = EncodingEnum.forContentType(payloadString);
 		}
 
@@ -174,7 +176,10 @@ public class SubscriptionDeliveringRestHookSubscriber extends BaseSubscriptionDe
 		deliverPayload(theMessage, subscription, payloadType, client);
 
 		// Interceptor call: SUBSCRIPTION_AFTER_REST_HOOK_DELIVERY
-		if (!myInterceptorBroadcaster.callHooks(Pointcut.SUBSCRIPTION_AFTER_REST_HOOK_DELIVERY, theMessage, subscription)) {
+		params = new HookParams()
+			.add(CanonicalSubscription.class, subscription)
+			.add(ResourceDeliveryMessage.class, theMessage);
+		if (!myInterceptorBroadcaster.callHooks(Pointcut.SUBSCRIPTION_AFTER_REST_HOOK_DELIVERY, params)) {
 			//noinspection UnnecessaryReturnStatement
 			return;
 		}

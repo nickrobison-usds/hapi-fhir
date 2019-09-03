@@ -46,7 +46,7 @@ public class DefaultThymeleafNarrativeGeneratorDstu3Test {
 
 	@Before
 	public void before() {
-		myGen = new DefaultThymeleafNarrativeGenerator(ourCtx);
+		myGen = new DefaultThymeleafNarrativeGenerator();
 		myGen.setUseHapiServerConformanceNarrative(true);
 
 		ourCtx.setNarrativeGenerator(myGen);
@@ -71,7 +71,7 @@ public class DefaultThymeleafNarrativeGeneratorDstu3Test {
 
 		value.setBirthDate(new Date());
 
-		myGen.populateResourceNarrative(value);
+		myGen.populateResourceNarrative(ourCtx, value);
 		String output = value.getText().getDiv().getValueAsString();
 		ourLog.info(output);
 		assertThat(output, StringContains.containsString("<div class=\"hapiHeaderText\">joe john <b>BLOW </b></div>"));
@@ -80,7 +80,7 @@ public class DefaultThymeleafNarrativeGeneratorDstu3Test {
 
 	@Test
 	public void testTranslations() throws DataFormatException {
-		CustomThymeleafNarrativeGenerator customGen = new CustomThymeleafNarrativeGenerator(ourCtx, "classpath:/testnarrative.properties");
+		CustomThymeleafNarrativeGenerator customGen = new CustomThymeleafNarrativeGenerator("classpath:/testnarrative.properties");
 
 		FhirContext ctx = FhirContext.forDstu3();
 		ctx.setNarrativeGenerator(customGen);
@@ -114,7 +114,7 @@ public class DefaultThymeleafNarrativeGeneratorDstu3Test {
 			}
 		});
 
-		customGen.populateResourceNarrative(value);
+		customGen.populateResourceNarrative(ourCtx, value);
 		String output = value.getText().getDiv().getValueAsString();
 		ourLog.info(output);
 		assertThat(output, StringContains.containsString("Some beautiful proze"));
@@ -130,7 +130,7 @@ public class DefaultThymeleafNarrativeGeneratorDstu3Test {
 		value.addResult().setReference("Observation/2");
 		value.addResult().setReference("Observation/3");
 
-		myGen.populateResourceNarrative(value);
+		myGen.populateResourceNarrative(ourCtx, value);
 		String output = value.getText().getDiv().getValueAsString();
 
 		ourLog.info(output);
@@ -158,7 +158,7 @@ public class DefaultThymeleafNarrativeGeneratorDstu3Test {
 		// ourLog.info(output);
 		// assertEquals("Operation Outcome (2 issues)", output);
 
-		myGen.populateResourceNarrative(oo);
+		myGen.populateResourceNarrative(ourCtx, oo);
 		String output = oo.getText().getDiv().getValueAsString();
 
 		ourLog.info(output);
@@ -197,13 +197,78 @@ public class DefaultThymeleafNarrativeGeneratorDstu3Test {
 			value.addResult().setResource(obs);
 		}
 
-		myGen.populateResourceNarrative(value);
+		myGen.populateResourceNarrative(ourCtx, value);
 		String output = value.getText().getDiv().getValueAsString();
 
 		ourLog.info(output);
 		assertThat(output, StringContains.containsString("<div class=\"hapiHeaderText\"> Some &amp; Diagnostic Report </div>"));
 
 	}
+
+	/**
+	 * See #1399
+	 */
+	@Test
+	public void testDiagnosticReport() {
+		String input = "{\n" +
+			"            \"resourceType\": \"DiagnosticReport\",\n" +
+			"            \"extension\": [\n" +
+			"               {\n" +
+			"                  \"url\": \"http://mihin.org/extension/copyright\",\n" +
+			"                  \"valueString\": \"Copyright 2014-2019 Michigan Health Information Network Shared Services. Licensed under the Apache License, Version 2.0 (the 'License'); you may not use this file except in compliance with the License. You may obtain a copy of the License at   http://www.apache.org/licenses/LICENSE-2.0.   Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on an 'AS IS' BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions and limitations under the License.\"\n" +
+			"               }\n" +
+			"            ],\n" +
+			"            \"identifier\": [\n" +
+			"               {\n" +
+			"                  \"use\": \"official\",\n" +
+			"                  \"system\": \"http://mihin.org/fhir/sid/elementId\",\n" +
+			"                  \"value\": \"b13e2d3a-f37b-4137-abbf-2a93f90c0e1c\"\n" +
+			"               }\n" +
+			"            ],\n" +
+			"            \"status\": \"final\",\n" +
+			"            \"code\": {\n" +
+			"               \"coding\": [\n" +
+			"                  {\n" +
+			"                     \"system\": \"http://loinc.org\",\n" +
+			"                     \"code\": \"47527-7\"\n" +
+			"                  }\n" +
+			"               ]\n" +
+			"            },\n" +
+			"            \"subject\": {\n" +
+			"               \"reference\": \"http://localhost:8080/hapi-fhir-jpaserver/fhir/Patient/2940\"\n" +
+			"            },\n" +
+			"            \"encounter\": {\n" +
+			"               \"reference\": \"Encounter/Encounter-184\",\n" +
+			"               \"display\": \"Wellness Visit\"\n" +
+			"            },\n" +
+			"            \"effectivePeriod\": {\n" +
+			"               \"start\": \"2016-01-13T10:40:00-05:00\",\n" +
+			"               \"end\": \"2016-01-13T10:40:00-05:00\"\n" +
+			"            },\n" +
+			"            \"issued\": \"2016-01-13T10:40:00.000-05:00\",\n" +
+			"            \"performer\": [\n" +
+			"               {\n" +
+			"                  \"reference\": \"http://localhost:8080/hapi-fhir-jpaserver/fhir/Practitioner/1600\"\n" +
+			"               }\n" +
+			"            ],\n" +
+			"            \"result\": [\n" +
+			"               {\n" +
+			"                  \"reference\": \"Observation/Observation-16492\",\n" +
+			"                  \"display\": \"Negative_HPV_Report_Observation_1\"\n" +
+			"               }\n" +
+			"            ]\n" +
+			"         }";
+
+
+		DiagnosticReport value = ourCtx.newJsonParser().parseResource(DiagnosticReport.class, input);
+		myGen.populateResourceNarrative(ourCtx, value);
+		String output = value.getText().getDiv().getValueAsString();
+
+		ourLog.info(output);
+		assertThat(output, StringContains.containsString("<div class=\"hapiHeaderText\"> Untitled Diagnostic Report </div>"));
+
+	}
+
 
 	@Test
 	@Ignore
@@ -217,7 +282,7 @@ public class DefaultThymeleafNarrativeGeneratorDstu3Test {
 		mp.setStatus(MedicationRequestStatus.ACTIVE);
 		mp.setAuthoredOnElement(new DateTimeType("2014-09-01"));
 
-		myGen.populateResourceNarrative(mp);
+		myGen.populateResourceNarrative(ourCtx, mp);
 		String output = mp.getText().getDiv().getValueAsString();
 
 		assertTrue("Expected medication name of ciprofloaxin within narrative: "+output, output.contains("ciprofloaxin"));
@@ -230,7 +295,7 @@ public class DefaultThymeleafNarrativeGeneratorDstu3Test {
 		Medication med = new Medication();
 		med.getCode().setText("ciproflaxin");
 
-		myGen.populateResourceNarrative(med);
+		myGen.populateResourceNarrative(ourCtx, med);
 
 		String output = med.getText().getDiv().getValueAsString();
 		assertThat(output, containsString("ciproflaxin"));
